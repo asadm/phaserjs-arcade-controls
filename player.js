@@ -32,6 +32,11 @@ class Player {
 
     // to detect player input
     this.input = game.input;
+
+    // to detect input from gamepad
+    game.input.gamepad.start();
+    this.pad = game.input.gamepad.pad1;
+    
   }
 
   handleJump() {
@@ -137,18 +142,24 @@ class Player {
   }
 
   spaceInputIsActive(duration) {
-    return this.input.keyboard.downDuration(Phaser.Keyboard.SPACEBAR, duration);
+    return this.input.keyboard.downDuration(Phaser.Keyboard.SPACEBAR, duration)
+           || this.pad.justPressed(Phaser.Gamepad.XBOX360_A, duration)
   }
 
   spaceInputReleased() {
-    return this.input.keyboard.upDuration(Phaser.Keyboard.SPACEBAR);
+    return this.input.keyboard.upDuration(Phaser.Keyboard.SPACEBAR)
+           || this.pad.justReleased(Phaser.Gamepad.XBOX360_A)
   }
 
   rightInputIsActive() {
-    return this.input.keyboard.isDown(Phaser.Keyboard.RIGHT);
+    return this.input.keyboard.isDown(Phaser.Keyboard.RIGHT)
+           || this.pad.isDown(Phaser.Gamepad.XBOX360_DPAD_RIGHT)
+           || this.pad.axis(Phaser.Gamepad.XBOX360_STICK_LEFT_X) > 0.1
   }
 
   leftInputIsActive(duration) {
-    return this.input.keyboard.isDown(Phaser.Keyboard.LEFT);
+    return this.input.keyboard.isDown(Phaser.Keyboard.LEFT)
+           || this.pad.isDown(Phaser.Gamepad.XBOX360_DPAD_LEFT)
+           || this.pad.axis(Phaser.Gamepad.XBOX360_STICK_LEFT_X) < -0.1
   }
 }
