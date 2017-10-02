@@ -1,203 +1,154 @@
-var Player = function(game, layer, x, y, spriteID){
+class Player {
+  constructor(game, layerTiles, x, y, spriteID) {
 
-  this.layer = layer;
+    this.layer = layerTiles;
 
-  // adding the hero sprite
-  this.hero = game.add.sprite(x, y, spriteID);
+    // adding the hero sprite
+    this.hero = game.add.sprite(x, y, spriteID);
 
-  // setting hero anchor point
-  this.hero.anchor.set(0.5);
+    // setting hero anchor point
+    this.hero.anchor.set(0.5);
 
-  // enabling ARCADE physics for the  hero
-  game.physics.enable(this.hero, Phaser.Physics.ARCADE);
+    // enabling ARCADE physics for the  hero
+    game.physics.enable(this.hero, Phaser.Physics.ARCADE);
 
-  // setting hero gravity
-  this.hero.body.gravity.y = gameOptions.playerGravity;
+    // setting hero gravity
+    this.hero.body.gravity.y = gameOptions.playerGravity;
 
-  // Set player minimum and maximum movement speed
-  this.hero.body.maxVelocity.setTo(gameOptions.playerSpeed, gameOptions.playerSpeed * 10); // x, y
+    // Set player minimum and maximum movement speed
+    this.hero.body.maxVelocity.setTo(gameOptions.playerSpeed, gameOptions.playerSpeed * 10); // x, y
 
-  // Add drag to the player that slows them down when they are not accelerating
-  this.hero.body.drag.setTo(gameOptions.playerDrag, 0); // x, y
+    // Add drag to the player that slows them down when they are not accelerating
+    this.hero.body.drag.setTo(gameOptions.playerDrag, 0); // x, y
 
-  // the hero can jump
-  this.canJump = true;
+    // the hero can jump
+    this.canJump = true;
 
-  // hero is in a jump
-  this.jumping = false;
+    // hero is in a jump
+    this.jumping = false;
 
-  // the hero is not on the wall
-  this.onWall = false;
+    // the hero is not on the wall
+    this.onWall = false;
 
-  // to detect player input
-  this.input = game.input;
-};
+    // to detect player input
+    this.input = game.input;
+  }
 
-//Player.prototype = Object.create(Phaser.Sprite.prototype);
-Player.prototype.constructor = Player;
+  handleJump() {
+    // the hero can jump when:
+    // canJump is true AND the hero is on the ground (blocked.down)
+    // OR
+    // the hero is on the wall
+    if ((this.canJump) || this.onWall) {
 
+      // applying jump force
+      this.hero.body.velocity.y = -gameOptions.playerJump;
 
-Player.prototype.handleJump = function () {
-  
-  // the hero can jump when:
-  // canJump is true AND the hero is on the ground (blocked.down)
-  // OR
-  // the hero is on the wall
-  if ((this.canJump) || this.onWall) {
+      // is the hero on a wall and this isn't the first jump (jump from ground to wall)
+      // if yes then push to opposite direction
+      if (this.onWall && !this.isFirstJump) {
 
-    // applying jump force
-    this.hero.body.velocity.y = -gameOptions.playerJump;
+        // flip horizontally the hero
+        this.hero.scale.x *= -1;
 
-    // is the hero on a wall?
-    //console.log(this.firstJump)
-    if (this.onWall && !this.isFirstJump) {
+        // change the horizontal velocity too. This way the hero will jump off the wall
+        this.hero.body.velocity.x = gameOptions.playerSpeed * this.hero.scale.x;
+      }
 
-      // flip horizontally the hero
-      this.hero.scale.x *= -1;
+      // hero is not on the wall anymore
+      this.onWall = false;
+    }
+  }
 
-      // change the horizontal velocity too. This way the hero will jump off the wall
-      this.hero.body.velocity.x = gameOptions.playerSpeed * this.hero.scale.x;
+  update() {
+
+    // handling collision between the hero and the tiles
+    game.physics.arcade.collide(this.hero, this.layer, function (hero, layer) {
+
+      // hero on the ground
+      if (hero.body.blocked.down) {
+        // hero can jump
+        this.canJump = true;
+
+        // hero not on the wall
+        this.onWall = false;
+      }
+
+      // hero NOT on the ground and touching a wall on the right
+      if (this.hero.body.blocked.right && !this.hero.body.blocked.down) {
+
+        // hero on a wall
+        this.onWall = true;
+
+        // drag on wall only if key pressed and going downwards.
+        if (this.rightInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
+          this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
+        }
+
+      }
+
+      if (this.hero.body.blocked.left && !this.hero.body.blocked.down) {
+        this.onWall = true;
+
+        // drag on wall only if key pressed and going downwards.
+        if (this.leftInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
+          this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
+        }
+
+      }
+    }, null, this);
+
+    if (this.hero.body.blocked.down || this.onWall) {
+      // set total jumps allowed
+      this.jumps = gameOptions.playerMaxJumps;
+      this.jumping = false;
+    }
+    else if (!this.jumping) {
+      this.jumps = 0;
     }
 
-    // hero can't jump anymore
-    //this.canJump = false;
+    if (this.leftInputIsActive()) {
+      // If the LEFT key is down, set the player velocity to move left
+      this.hero.body.acceleration.x = -gameOptions.playerAcceleration;
+      this.hero.scale.x = -1;
+    } else if (this.rightInputIsActive()) {
+      // If the RIGHT key is down, set the player velocity to move right
+      this.hero.body.acceleration.x = gameOptions.playerAcceleration;
+      this.hero.scale.x = 1;
+    } else {
+      this.hero.body.acceleration.x = 0;
+    }
 
-    // hero is not on the wall anymore
-    this.onWall = false;
+    if ((this.onWall || this.jumps > 0) && this.spaceInputIsActive(150)) {
+      if (this.hero.body.blocked.down)
+        this.isFirstJump = true;
+      this.handleJump()
+      this.jumping = true;
+    }
+
+    if (this.spaceInputReleased()) {
+      this.isFirstJump = false;
+    }
+    
+    if (this.jumping && this.spaceInputReleased()) {
+      this.jumps--;
+      this.jumping = false;
+    }
+  }
+
+  spaceInputIsActive(duration) {
+    return this.input.keyboard.downDuration(Phaser.Keyboard.SPACEBAR, duration);
+  }
+
+  spaceInputReleased() {
+    return this.input.keyboard.upDuration(Phaser.Keyboard.SPACEBAR);
+  }
+
+  rightInputIsActive() {
+    return this.input.keyboard.isDown(Phaser.Keyboard.RIGHT);
+  }
+
+  leftInputIsActive(duration) {
+    return this.input.keyboard.isDown(Phaser.Keyboard.LEFT);
   }
 }
-
-Player.prototype.update = function() {
-    
-  // handling collision between the hero and the tiles
-  game.physics.arcade.collide(this.hero, this.layer, function (hero, layer) {
-
-
-    // hero on the ground
-    if (hero.body.blocked.down) {
-
-      // hero can jump
-      this.canJump = true;
-
-      // hero not on the wall
-      this.onWall = false;
-
-
-    }
-
-
-    // hero on the ground and touching a wall on the right
-    if (this.hero.body.blocked.right && this.hero.body.blocked.down) {
-
-      // horizontal flipping hero sprite
-      //this.hero.scale.x = -1;
-      //this.isSlidingOnWall = false;
-    }
-
-    // hero NOT on the ground and touching a wall on the right
-    if (this.hero.body.blocked.right && !this.hero.body.blocked.down) {
-
-      // hero on a wall
-      this.onWall = true;
-
-      // drag on wall only if key pressed and going downwards.
-      if (this.rightInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
-        this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
-      }
-
-      // is sliding/going up on wall
-      if (this.rightInputIsActive()) {
-        this.isSlidingOnWall = true;
-      }
-    }
-
-    // same concept applies to the left
-    if (this.hero.body.blocked.left && this.hero.body.blocked.down) {
-      //this.hero.scale.x = 1;
-      this.isSlidingOnWall = false;
-    }
-    if (this.hero.body.blocked.left && !this.hero.body.blocked.down) {
-      this.onWall = true;
-
-      // drag on wall only if key pressed and going downwards.
-      if (this.leftInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
-        this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
-      }
-
-      // is sliding/going up on wall
-      if (this.leftInputIsActive()) {
-        this.isSlidingOnWall = true;
-      }
-    }
-
-    // adjusting hero speed according to the direction it's moving
-    //this.hero.body.velocity.x = gameOptions.playerSpeed * this.hero.scale.x;
-  }, null, this);
-
-  if (this.hero.body.blocked.down || this.onWall) {
-    // set total jumps allowed
-    this.jumps = gameOptions.playerMaxJumps;
-    this.jumping = false;
-  }
-  else if (!this.jumping) {
-    this.jumps = 0;
-  }
-
-  if (this.leftInputIsActive()) {
-    // If the LEFT key is down, set the player velocity to move left
-    this.hero.body.acceleration.x = -gameOptions.playerAcceleration;
-    this.hero.scale.x = -1;
-  } else if (this.rightInputIsActive()) {
-    // If the RIGHT key is down, set the player velocity to move right
-    this.hero.body.acceleration.x = gameOptions.playerAcceleration;
-    this.hero.scale.x = 1;
-  } else {
-    this.hero.body.acceleration.x = 0;
-  }
-
-  if ((this.onWall || this.jumps > 0) && this.spaceInputIsActive(150)) {
-    if (this.hero.body.blocked.down)
-      this.isFirstJump = true;
-    this.handleJump()
-    this.jumping = true;
-
-
-    //this.hero.body.velocity.y = -gameOptions.playerJump;
-  }
-  if (this.spaceInputReleased()) {
-    this.isFirstJump = false;
-  }
-  if (this.jumping && this.spaceInputReleased()) {
-    this.jumps--;
-    this.jumping = false;
-  }
-};
-
-Player.prototype.spaceInputIsActive = function(duration) {
-  var isActive = false;
-
-  isActive = this.input.keyboard.downDuration(Phaser.Keyboard.SPACEBAR, duration);
-  return isActive;
-};
-
-Player.prototype.spaceInputReleased = function() {
-    var released = false;
-
-    released = this.input.keyboard.upDuration(Phaser.Keyboard.SPACEBAR);
-
-    return released;
-};
-
-Player.prototype.rightInputIsActive = function() {
-  var isActive = false;
-
-  isActive = this.input.keyboard.isDown(Phaser.Keyboard.RIGHT);
-  return isActive;
-};
-
-Player.prototype.leftInputIsActive = function(duration) {
-  var isActive = false;
-
-  isActive = this.input.keyboard.isDown(Phaser.Keyboard.LEFT);
-  return isActive;
-};
