@@ -1,3 +1,24 @@
+var playerOptions = {
+  // player gravity
+  playerGravity: 900,
+  
+  // player horizontal speed
+  playerSpeed: 300,
+
+  // player force
+  playerJump: 300,
+
+  playerWallDragMaxVelocity: 50,
+
+  // allow how many jumps (>1 for mid air jumps)
+  playerMaxJumps: 1,
+
+  // should be below acceleration. 
+  // You can disable "slippery floor" setting by giving ridiculously high value
+  playerDrag: 700,// 9999,
+
+  playerAcceleration: 1500
+}
 class Player {
   constructor(game, layerTiles, x, y, spriteID) {
 
@@ -13,13 +34,13 @@ class Player {
     game.physics.enable(this.hero, Phaser.Physics.ARCADE);
 
     // setting hero gravity
-    this.hero.body.gravity.y = gameOptions.playerGravity;
+    this.hero.body.gravity.y = playerOptions.playerGravity;
 
     // Set player minimum and maximum movement speed
-    this.hero.body.maxVelocity.setTo(gameOptions.playerSpeed, gameOptions.playerSpeed * 10); // x, y
+    this.hero.body.maxVelocity.setTo(playerOptions.playerSpeed, playerOptions.playerSpeed * 10); // x, y
 
     // Add drag to the player that slows them down when they are not accelerating
-    this.hero.body.drag.setTo(gameOptions.playerDrag, 0); // x, y
+    this.hero.body.drag.setTo(playerOptions.playerDrag, 0); // x, y
 
     // the hero can jump
     this.canJump = true;
@@ -47,7 +68,7 @@ class Player {
     if ((this.canJump) || this.onWall) {
 
       // applying jump force
-      this.hero.body.velocity.y = -gameOptions.playerJump;
+      this.hero.body.velocity.y = -playerOptions.playerJump;
 
       // is the hero on a wall and this isn't the first jump (jump from ground to wall)
       // if yes then push to opposite direction
@@ -57,7 +78,7 @@ class Player {
         this.hero.scale.x *= -1;
 
         // change the horizontal velocity too. This way the hero will jump off the wall
-        this.hero.body.velocity.x = gameOptions.playerSpeed * this.hero.scale.x;
+        this.hero.body.velocity.x = playerOptions.playerSpeed * this.hero.scale.x;
       }
 
       // hero is not on the wall anymore
@@ -86,8 +107,8 @@ class Player {
         this.onWall = true;
 
         // drag on wall only if key pressed and going downwards.
-        if (this.rightInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
-          this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
+        if (this.rightInputIsActive() && this.hero.body.velocity.y > playerOptions.playerWallDragMaxVelocity) {
+          this.hero.body.velocity.y = playerOptions.playerWallDragMaxVelocity;
         }
 
       }
@@ -96,8 +117,8 @@ class Player {
         this.onWall = true;
 
         // drag on wall only if key pressed and going downwards.
-        if (this.leftInputIsActive() && this.hero.body.velocity.y > gameOptions.playerWallDragMaxVelocity) {
-          this.hero.body.velocity.y = gameOptions.playerWallDragMaxVelocity;
+        if (this.leftInputIsActive() && this.hero.body.velocity.y > playerOptions.playerWallDragMaxVelocity) {
+          this.hero.body.velocity.y = playerOptions.playerWallDragMaxVelocity;
         }
 
       }
@@ -105,7 +126,7 @@ class Player {
 
     if (this.hero.body.blocked.down || this.onWall) {
       // set total jumps allowed
-      this.jumps = gameOptions.playerMaxJumps;
+      this.jumps = playerOptions.playerMaxJumps;
       this.jumping = false;
     }
     else if (!this.jumping) {
@@ -114,11 +135,11 @@ class Player {
 
     if (this.leftInputIsActive()) {
       // If the LEFT key is down, set the player velocity to move left
-      this.hero.body.acceleration.x = -gameOptions.playerAcceleration;
+      this.hero.body.acceleration.x = -playerOptions.playerAcceleration;
       this.hero.scale.x = -1;
     } else if (this.rightInputIsActive()) {
       // If the RIGHT key is down, set the player velocity to move right
-      this.hero.body.acceleration.x = gameOptions.playerAcceleration;
+      this.hero.body.acceleration.x = playerOptions.playerAcceleration;
       this.hero.scale.x = 1;
     } else {
       this.hero.body.acceleration.x = 0;

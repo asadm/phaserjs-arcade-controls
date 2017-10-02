@@ -7,3 +7,9 @@ This is my attempt to make the perfect game mechanics. Essentially a combination
 https://asadmemon.com/phaserjs-arcade-controls/
 
 Controls: Arrow keys to move and space for jump.
+
+### Features
+- Walking with acceleration/de-acceleration.
+- Variable jumping (pressing key for higher time results in higher jump)
+- Wall jump/climbing.
+- Wall sliding down (by holding key against the wall when coming down)

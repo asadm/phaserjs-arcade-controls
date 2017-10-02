@@ -8,26 +8,7 @@ var gameOptions = {
     gameHeight: 480,
 
     // background color
-    bgColor: 0x444444,
-
-    // player gravity
-    playerGravity: 900,
-
-    // player horizontal speed
-    playerSpeed: 300,
-
-    // player force
-    playerJump: 300,
-
-    playerWallDragMaxVelocity: 50,
-
-    // allow how many jumps (>1 for mid air jumps)
-    playerMaxJumps: 1,
-
-    // should be below acceleration. Disabling "slippery floor" for now by giving ridiculously high value
-    playerDrag: 12050,// 1250,
-
-    playerAcceleration: 1500
+    bgColor: 0x444444
 }
 window.onload = function() {
     game = new Phaser.Game(gameOptions.gameWidth, gameOptions.gameHeight);
